@@ -35,4 +35,6 @@ Options:
 > `$ source ./dependencies/miniconda/bin/activate && python runner.py [CONTIGS_FASTA]`
 
 ## Run workflow on Flux
+Depending on the size of the input fasta and/or reference, you may need to increase the memory `--mem` and processor count `--ppn`
+
 > `source ./dependencies/miniconda/bin/activate && python runner.py [CONTIGS_FASTA] --flux --account [ACCOUNT]`
