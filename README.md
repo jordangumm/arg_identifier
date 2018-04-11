@@ -7,6 +7,26 @@ Built and tested on GNU/Linux.
 2. Run RGI against the filtered fasta file
 3. Create fasta file for each ARO with all predicted ARGs
 
+## Usage
+```
+Usage: runner.py [OPTIONS] CONTIGS_FASTA
+
+  Analysis Workflow Management
+
+  Sets up Pyflow WorkflowRunner and launches locally by default or via flux
+
+Options:
+  -r, --reference TEXT
+  -o, --output TEXT
+  --flux / --no-flux
+  --dispatch / --no-dispatch
+  -a, --account TEXT
+  -p, --ppn INTEGER
+  -m, --mem TEXT
+  -w, --walltime TEXT
+  --help                      Show this message and exit.
+```
+
 ## Install anaconda environment and dependencies
 > `$ ./build.sh`
 
