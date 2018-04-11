@@ -32,4 +32,7 @@ Options:
 
 
 ## Run workflow
-> `$ source ./dependencies/miniconda/bin/activate && python runner.py [fasta_file]`
+> `$ source ./dependencies/miniconda/bin/activate && python runner.py [CONTIGS_FASTA]`
+
+## Run workflow on Flux
+> `source ./dependencies/miniconda/bin/activate && python runner.py [CONTIGS_FASTA] --flux --account [ACCOUNT]`
