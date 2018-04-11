@@ -1,6 +1,7 @@
 import os, sys
 import click
 
+import pandas as pd
 from pyflux import FluxWorkflowRunner
 from subprocess import call
 
@@ -14,12 +15,35 @@ class Runner(FluxWorkflowRunner):
     def workflow(self):
         """ method invoked on class instance run call """
         fp = os.path.dirname(os.path.abspath(__file__))
+        card = os.path.join(fp, './dependencies/data/card/model/card.json')
         conda = os.path.join(fp, './dependencies/miniconda/bin/activate')
+        load_py3 = 'source activate py3'
+        identifier = os.path.join(fp, 'identifier.py')
 
         pblat_output = os.path.join(self.output_dp, 'pblat.psl')
         self.addTask("pblat", nCores=self.getNCores(), memMb=self.getMemMb(),
-             command='source {} && pblat -threads={} {} {} {}'.format(conda, int(self.getNCores()),
+             command='source {} && pblat -noHead -threads={} {} {} {}'.format(conda, int(self.getNCores()),
                                             self.contigs_fasta, self.reference, pblat_output))
+
+        filtered_fasta = os.path.join(self.output_dp, 'filtered.fasta')
+        self.addTask("psl_filter", nCores=self.getNCores(), memMb=self.getMemMb(),
+             command='source {} && python {} psl_filter -f {} -p {} -o {}'.format(conda, identifier,
+                                            self.contigs_fasta, pblat_output, filtered_fasta),
+             dependencies=['pblat',])
+
+        rgi_output = os.path.join(self.output_dp, 'rgi_output')
+        self.addTask("rgi_screen", nCores=self.getNCores(), memMb=self.getMemMb(),
+             command='source {} && {} && rgi load --afile {} --local && rgi main -a DIAMOND -n {} -i {} -o {} --local'.format(
+                                                        conda, load_py3, card, int(self.getNCores()), filtered_fasta, rgi_output),
+             dependencies=['psl_filter',])
+
+        rgi_txt = rgi_output+'.txt'
+        arg_output = os.path.join(self.output_dp, 'predicted_args')
+        self.addTask("create_fastas", nCores=self.getNCores(), memMb=self.getMemMb(),
+            command='source {} && python {} build -r {} -o {}'.format(conda, identifier, rgi_txt, arg_output),
+            dependencies=['rgi_screen',])
+        
+         
 
 
 
@@ -39,8 +63,8 @@ def runner(contigs_fasta, reference, output, flux, dispatch, account, ppn, mem, 
 
     Sets up Pyflow WorkflowRunner and launches locally by default or via flux
     """
-    if not output: output = os.path.join('./', 'bioinfo', 'arg_identifier')
-    log_output_dp = os.path.join(output, 'bioinfo', 'logs', 'runner')
+    if not output: output = os.path.join('./', 'output')
+    log_output_dp = os.path.join(output, 'logs')
     workflow_runner = Runner(contigs_fasta=contigs_fasta, reference=reference, output_dp=output)
 
     if flux:

@@ -29,19 +29,24 @@ source ./dependencies/miniconda/bin/activate
 conda install -y -c bioconda screed biopython
 conda install -y pandas click pyyaml tqdm
 
-# install RGI in conda env
-wget https://card.mcmaster.ca/download/1/software-v4.0.2.tar.gz
-tar xvf software-v4.0.2.tar.gz
-rm software-v4.0.2.tar.gz
-tar zxvf rgi-4.0.2.tar.gz
-rm rgi-4.0.2.tar.gz
-cd rgi-4.0.2 && pip install -e . && cd ..
-rm -r rgi-4.0.2
-
 # install pyflow for automated task management
 wget https://github.com/Illumina/pyflow/releases/download/v1.1.17/pyflow-1.1.17.tar.gz
 pip install pyflow-1.1.17.tar.gz
 rm pyflow-1.1.17.tar.gz
+
+# create python3 env for rgi and dependencies
+conda create -n py3 python=3.6
+source activate py3
+conda install -c bioconda prodigal=2.6.3 diamond=0.8.36 blast
+pip install biopython filetype pandas pytest mock
+
+# install RGI in conda env
+wget https://card.mcmaster.ca/download/1/software-v4.0.2.tar.gz
+tar xvf software-v4.0.2.tar.gz
+rm software-v4.0.2.tar.gz
+tar zxvf rgi-4.0.2.tar.gz -C dependencies
+rm rgi-4.0.2.tar.gz
+cd dependencies/rgi-4.0.2 && pip install -e . && cd ../..
 
 # download card ontology and model
 wget https://card.mcmaster.ca/download/5/ontology-v2.0.0.tar.gz

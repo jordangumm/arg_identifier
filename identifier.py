@@ -1,0 +1,56 @@
+import click
+import os
+
+import screed
+import pandas as pd
+
+
+@click.group()
+def cli():
+    pass
+
+
+@cli.command()
+@click.option('--fasta_fp', '-f', required=True)
+@click.option('--psl_fp', '-p', required=True)
+@click.option('--output_fp', '-o', required=True)
+def psl_filter(fasta_fp, psl_fp, output_fp):
+    hits = pd.read_csv(psl_fp, sep='\t', names=['matches', 'misMatches', 'repMatches', 'nCount',
+                                                  'qNumInsert', 'qBaseInsert', 'tNumInsert', 'tBaseInsert',
+                                                  'strand', 'qName', 'qSize', 'qStart', 'qEnd',
+                                                  'tName', 'tSize', 'tStart', 'tEnd',
+                                                  'blockCount', 'blockSizes', 'qStarts', 'tStarts'])
+    fasta_db = screed.read_fasta_sequences(fasta_fp)
+    output = open(output_fp, 'w+')
+    for seq in fasta_db:
+        i = 0
+        if seq in hits['tName'].unique():
+            if i == 0: output.write('>{}\n{}'.format(fasta_db[seq].name, str(fasta_db[seq].sequence)))
+            else: output.write('\n>{}\n{}'.format(fasta_db[seq].name, str(fasta_db[seq].sequence)))
+            i += 1
+    output.close()
+
+@cli.command()
+@click.option('--rgi_tsv', '-r', required=True)
+@click.option('--output_dp', '-o', required=True)
+def build(rgi_tsv, output_dp):
+    if not os.path.exists(output_dp): os.makedirs(output_dp)
+    rgi_df = pd.read_csv(rgi_tsv, sep='\t')
+    for aro in rgi_df['Best_Hit_ARO'].unique():
+        rgi_aros = rgi_df[rgi_df['Best_Hit_ARO'] == aro]
+        output = open(os.path.join(output_dp, '{}.fasta'.format(aro)), 'w+')
+        i = 0
+        for _, arg in rgi_aros.iterrows():
+            if i == 0: output.write('>{}\n{}'.format('{}|{}|{}'.format(
+                                     arg['Best_Hit_ARO'], arg['Contig'], arg['Cut_Off']).replace(' ',''), 
+                                     arg['Predicted_DNA']))
+            else: output.write('\n>{}\n{}'.format('{}|{}|{}'.format(
+                                arg['Best_Hit_ARO'], arg['Contig'], arg['Cut_Off']).replace(' ',''),
+                                arg['Predicted_DNA']))
+            i += 1
+        output.close()
+    
+
+
+if __name__ == "__main__":
+    cli()
