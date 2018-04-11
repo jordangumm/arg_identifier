@@ -3,3 +3,4 @@ dependencies
 bioinfo
 localDB
 output
+pyflux_handler*

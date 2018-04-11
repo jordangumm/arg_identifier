@@ -22,7 +22,7 @@ class Runner(FluxWorkflowRunner):
 
         pblat_output = os.path.join(self.output_dp, 'pblat.psl')
         self.addTask("pblat", nCores=self.getNCores(), memMb=self.getMemMb(),
-             command='source {} && pblat -noHead -threads={} {} {} {}'.format(conda, int(self.getNCores()),
+             command='source {} && pblat -noHead -threads={} {} {} {}'.format(conda, self.getNCores(),
                                             self.contigs_fasta, self.reference, pblat_output))
 
         filtered_fasta = os.path.join(self.output_dp, 'filtered.fasta')
@@ -34,7 +34,7 @@ class Runner(FluxWorkflowRunner):
         rgi_output = os.path.join(self.output_dp, 'rgi_output')
         self.addTask("rgi_screen", nCores=self.getNCores(), memMb=self.getMemMb(),
              command='source {} && {} && rgi load --afile {} --local && rgi main -a DIAMOND -n {} -i {} -o {} --local'.format(
-                                                        conda, load_py3, card, int(self.getNCores()), filtered_fasta, rgi_output),
+                                                        conda, load_py3, card, self.getNCores(), filtered_fasta, rgi_output),
              dependencies=['psl_filter',])
 
         rgi_txt = rgi_output+'.txt'

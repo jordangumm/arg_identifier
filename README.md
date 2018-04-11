@@ -28,7 +28,8 @@ Options:
 ```
 
 ## Install anaconda environment and dependencies
-> `$ ./build.sh`
+> `$ git clone https://github.com/jordangumm/arg_identifier.git`
+> `$ cd arg_identifier && ./build.sh`
 
 
 ## Run workflow
