@@ -29,23 +29,27 @@ class Runner(FluxWorkflowRunner):
         max_mem = self.getMemMb()
         if max_mem == 'unlimited': max_mem = self.mem
 
+        """ Step 1. Identify sequences of 95% and greater similarity of length 40 bases or more using pblat """
         pblat_output = os.path.join(self.output_dp, 'pblat')
         self.addTask("pblat", nCores=max_cores, memMb=max_mem,
                  command='source {} && pblat -noHead -threads={} {} {} {}'.format(conda, max_cores,
                                                     self.reference, self.contigs_fasta, pblat_output))
 
+        """ Step 2. Create fasta file of hits found in previous step """
         filtered_fasta = os.path.join(self.output_dp, 'filtered.fasta')
         self.addTask("psl_filter", nCores=max_cores, memMb=max_mem,
              command='source {} && python {} psl_filter -f {} -p {} -o {}'.format(conda, identifier,
                                             self.contigs_fasta, pblat_output, filtered_fasta),
              dependencies=['pblat',])
 
+        """ Step 3. Screen filtered fasta file for ARG sequences using RGI with Diamond """
         rgi_output = os.path.join(self.output_dp, 'rgi_output')
         self.addTask("rgi_screen", nCores=max_cores, memMb=max_mem,
              command='source {} && {} && rgi load --afile {} --local && rgi main -a DIAMOND -n {} -i {} -o {} --local'.format(
                                                         conda, load_py3, card, max_cores, filtered_fasta, rgi_output),
              dependencies=['psl_filter',])
 
+        """ Step 4. Output predicted ARG sequences to fasta files named after the genes they contain """
         rgi_txt = rgi_output+'.txt'
         arg_output = os.path.join(self.output_dp, 'predicted_args')
         self.addTask("create_fastas", nCores=max_cores, memMb=max_mem,
@@ -83,8 +87,6 @@ def runner(contigs_fasta, reference, output, flux, dispatch, account, ppn, mem, 
             activate = 'source {}'.format(os.path.join(full_dp, 'dependencies', 'miniconda', 'bin', 'activate'))
             runner_fp = os.path.join(full_dp, 'runner.py')
             qsub = 'qsub -N pyflux_handler -A {} -q fluxm -l nodes=1:ppn=1,mem=2000mb,walltime={}'.format(account, walltime)
-            print 'echo "{} && python {} {} -r {} -o {} -a {} -p {} -m {} -w {} --flux --no-dispatch" | {}'.format(activate, runner_fp,
-                                               contigs_fasta, reference, output, account, ppn, mem, walltime, qsub)
             call('echo "{} && python {} {} -r {} -o {} -a {} -p {} -m {} -w {} --flux --no-dispatch" | {}'.format(activate, runner_fp,
                                                contigs_fasta, reference, output, account, ppn, mem, walltime, qsub), shell=True)
         else:
